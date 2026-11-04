@@ -19,6 +19,7 @@
   --accent-soft: #dcefe8;
   --accent-ink: #ffffff;
   --danger: #a8341c;
+  --t1: #2b6cb0; --t2: #c2570c; --t3: #b8325a; --t4: #6b46c1; --t5: #9a7400;
   --f-display: "Archivo Narrow", "Arial Narrow", Arial, sans-serif;
   --f-body: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   --f-mono: "JetBrains Mono", ui-monospace, "SF Mono", Consolas, monospace;
@@ -26,13 +27,13 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #11171d; --surface: #1a232c; --surface-2: #212c37; --ink: #e6ecf2; --ink-2: #9fb0c0; --line: #2e3b48;
-    --accent: #4fc79b; --accent-soft: #1b3a30; --accent-ink: #08261c; --danger: #f08a63;
+    --accent: #4fc79b; --accent-soft: #1b3a30; --accent-ink: #08261c; --danger: #f08a63; --t1: #7ab2ee; --t2: #f0a05a; --t3: #f08fb0; --t4: #b69af0; --t5: #e3bf45;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #11171d; --surface: #1a232c; --surface-2: #212c37; --ink: #e6ecf2; --ink-2: #9fb0c0; --line: #2e3b48;
-  --accent: #4fc79b; --accent-soft: #1b3a30; --accent-ink: #08261c; --danger: #f08a63;
+  --accent: #4fc79b; --accent-soft: #1b3a30; --accent-ink: #08261c; --danger: #f08a63; --t1: #7ab2ee; --t2: #f0a05a; --t3: #f08fb0; --t4: #b69af0; --t5: #e3bf45;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -175,10 +176,11 @@ textarea.in { resize: vertical; min-height: 84px; }
 .mcell.sel { border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink); }
 .mnum { font: 600 13px var(--f-mono); align-self: flex-start; min-width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; border-radius: 12px; padding: 0 4px; }
 .mcell.today .mnum { background: var(--accent); color: var(--accent-ink); }
-.mchip { display: block; font-size: 11px; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: var(--accent-soft); border-radius: 4px; padding: 2px 4px; }
+.mchip { display: block; font-size: 11px; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: color-mix(in srgb, var(--lc, var(--ink-2)) 14%, var(--surface)); border-left: 3px solid var(--lc, var(--line)); border-radius: 4px; padding: 2px 4px; }
 .mchip i { font: 500 10px var(--f-mono); font-style: normal; color: var(--ink-2); margin-right: 4px; }
 .mmore { font-size: 11px; color: var(--ink-2); }
-.mcnt { display: none; font: 600 12px var(--f-mono); color: var(--accent); }
+.mdots { display: none; }
+.mdots i { width: 7px; height: 7px; border-radius: 50%; background: var(--lc); display: block; }
 .mbar { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; }
 .mbar i { display: block; height: 100%; background: var(--accent); }
 .mday { margin-top: 18px; display: flex; flex-direction: column; gap: 12px; }
@@ -186,10 +188,23 @@ textarea.in { resize: vertical; min-height: 84px; }
 .mdayhead h3 { font: 700 22px/1.1 var(--f-display); margin: 0; }
 @media (max-width: 600px) {
   .mchip, .mmore { display: none; }
-  .mcnt { display: inline; }
+  .mdots { display: flex; gap: 3px; flex-wrap: wrap; justify-content: center; }
+  .msel { font-size: 18px; }
   .mcell { min-height: 58px; align-items: center; padding: 4px 2px 8px; }
   .mnum { align-self: center; }
 }
+.topbar { position: sticky; top: 0; z-index: 20; background: var(--bg); padding-block: 8px; display: flex; flex-direction: column; gap: 8px; }
+.labelbar { display: flex; gap: 6px; flex-wrap: wrap; }
+.lchip { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 4px 12px; border: 1px solid var(--line); background: var(--surface); border-radius: 16px; cursor: pointer; font-size: 13px; font-weight: 500; }
+.lchip[aria-pressed="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+.ldot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--lc, var(--ink-2)); flex: none; vertical-align: 0; }
+.block[data-lab] { border-left: 4px solid var(--lc); }
+.dchip { display: inline-flex; align-items: center; gap: 6px; justify-content: center; }
+.lrows { display: flex; flex-direction: column; gap: 8px; max-width: 420px; }
+.lrow { display: flex; align-items: center; gap: 10px; }
+.lrow .ldot { width: 14px; height: 14px; }
+.mcenter { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: center; }
+.msel { font: 700 22px var(--f-display); padding: 4px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink); min-height: 40px; cursor: pointer; }
 .note { display: flex; flex-direction: column; gap: 6px; }
 .note label { font: 600 12px var(--f-body); letter-spacing: .06em; text-transform: uppercase; color: var(--ink-2); }
 .tools { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
@@ -226,10 +241,14 @@ textarea.in { resize: vertical; min-height: 84px; }
       <button class="btn icon" data-act="next" aria-label="Día siguiente">→</button>
     </div>
   </header>
+  <div class="topbar">
+    <div class="viewbar" id="viewbar"></div>
+    <div class="labelbar" id="labelbar" hidden></div>
+  </div>
   <nav class="week" id="week" aria-label="Semana"></nav>
   <section class="summary" id="summary"></section>
   <div class="guestbar" id="guestbar" hidden></div>
-  <div class="viewbar" id="viewbar" hidden></div>
+  <div class="block" id="labelsPanel" hidden></div>
   <div class="list" id="blocks"></div>
   <div class="note">
     <label for="noteBox">Nota del día</label>
@@ -263,12 +282,13 @@ textarea.in { resize: vertical; min-height: 84px; }
   function parseKey(k) { var p = k.split('-'); return new Date(+p[0], +p[1] - 1, +p[2], 12); }
   var DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
+  var DEFAULT_LABELS = ['Trabajo', 'Personal', 'Salud', 'Estudio', ''];
   function seed() {
-    return { v: 2, updatedAt: 0, done: {}, notes: {}, blocks: [] };
+    return { v: 2, updatedAt: 0, done: {}, notes: {}, labelNames: DEFAULT_LABELS.slice(), blocks: [] };
   }
   function sanitize(s) {
     if (!s || typeof s !== 'object' || !Array.isArray(s.blocks)) return seed();
-    var out = { v: 2, updatedAt: +s.updatedAt || 0, done: {}, notes: {}, blocks: [] };
+    var out = { v: 2, updatedAt: +s.updatedAt || 0, done: {}, notes: {}, labelNames: (Array.isArray(s.labelNames) && s.labelNames.length === 5) ? s.labelNames.map(String) : DEFAULT_LABELS.slice(), blocks: [] };
     s.blocks.forEach(function (b) {
       if (!b || typeof b !== 'object') return;
       out.blocks.push({
@@ -276,6 +296,7 @@ textarea.in { resize: vertical; min-height: 84px; }
         start: /^\d{1,2}:\d{2}/.test(b.start) ? b.start : '06:00',
         days: Array.isArray(b.days) ? b.days.filter(function (d) { return d >= 0 && d <= 6; }) : [0, 1, 2, 3, 4, 5, 6],
         once: DATE_RE.test(b.once || '') ? b.once : '',
+        label: /^l[1-5]$/.test(b.label || '') ? b.label : '',
         steps: (Array.isArray(b.steps) ? b.steps : []).map(function (t) {
           return { id: String(t.id || uid()), name: String(t.name || ''), min: Math.max(1, parseInt(t.min, 10) || 1) };
         })
@@ -292,6 +313,8 @@ textarea.in { resize: vertical; min-height: 84px; }
   var sel = noon(new Date());
   var monthRef = new Date(sel.getFullYear(), sel.getMonth(), 1, 12);
   function syncMonth() { monthRef = new Date(sel.getFullYear(), sel.getMonth(), 1, 12); }
+  function shiftMonth(n) { monthRef = new Date(monthRef.getFullYear(), monthRef.getMonth() + n, 1, 12); }
+  var filterLabel = '', labelsOpen = false;
   var view = 'list';
   try { if (localStorage.getItem(LS_VIEW) === 'hour') view = 'hour'; } catch (e) {}
   var editId = null, draft = null;
@@ -305,9 +328,9 @@ textarea.in { resize: vertical; min-height: 84px; }
     b.steps.forEach(function (s) { rows.push({ step: s, from: cur, to: cur + s.min }); cur += s.min; });
     return { rows: rows, start: toMin(b.start), end: cur };
   }
-  function runsOn(b, d) { return b.once ? b.once === keyOf(d) : b.days.indexOf(d.getDay()) !== -1; }
+  function runsOn(b, d) { return (b.once ? b.once === keyOf(d) : b.days.indexOf(d.getDay()) !== -1); }
   function blocksFor(d) {
-    return state.blocks.filter(function (b) { return runsOn(b, d); })
+    return state.blocks.filter(function (b) { return runsOn(b, d) && (!filterLabel || b.label === filterLabel); })
       .sort(function (a, b) { return toMin(a.start) - toMin(b.start); });
   }
   function dayProgress(d) {
@@ -315,6 +338,10 @@ textarea.in { resize: vertical; min-height: 84px; }
     blocksFor(d).forEach(function (b) { b.steps.forEach(function (s) { total++; if (done[s.id]) n++; }); });
     return { total: total, done: n };
   }
+  function labName(l) { var i = parseInt(String(l || '').slice(1), 10) - 1; return (i >= 0 && i < 5 && state.labelNames[i]) ? state.labelNames[i] : ''; }
+  function labVar(l) { return 'var(--t' + parseInt(String(l).slice(1), 10) + ')'; }
+  function labAttr(b) { return labName(b.label) ? ' data-lab="1" style="--lc:' + labVar(b.label) + '"' : ''; }
+  function labTag(b) { return labName(b.label) ? ' · <span class="ldot" style="--lc:' + labVar(b.label) + '"></span> ' + esc(labName(b.label)) : ''; }
   function isLS(b) { return b.days.length === 6 && [1, 2, 3, 4, 5, 6].every(function (d) { return b.days.indexOf(d) !== -1; }); }
   function freqKind(b) { return b.once ? 'once' : (b.days.length === 7 ? 'all' : (isLS(b) ? 'ls' : 'days')); }
   function freqText(b) {
@@ -381,14 +408,14 @@ textarea.in { resize: vertical; min-height: 84px; }
   var fb = null, authUser = null, unsub = null, authKnown = false, guestHint = false, guestDismissed = false;
   var SAMPLES = [
     { k: 'office', label: 'Jornada de oficina', desc: 'Correos por la mañana y reporte al final del día. Lun–Vie.', blocks: [
-      { name: 'Revisión de correos', start: '08:00', days: [1, 2, 3, 4, 5], steps: [['Leer y clasificar', 15], ['Responder urgentes', 20]] },
-      { name: 'Reporte del día', start: '16:30', days: [1, 2, 3, 4, 5], steps: [['Recopilar datos', 20], ['Enviar reporte', 10]] }] },
+      { name: 'Revisión de correos', label: 'l1', start: '08:00', days: [1, 2, 3, 4, 5], steps: [['Leer y clasificar', 15], ['Responder urgentes', 20]] },
+      { name: 'Reporte del día', label: 'l1', start: '16:30', days: [1, 2, 3, 4, 5], steps: [['Recopilar datos', 20], ['Enviar reporte', 10]] }] },
     { k: 'morning', label: 'Rutina de la mañana', desc: 'Para empezar el día con orden. Todos los días.', blocks: [
-      { name: 'Rutina de la mañana', start: '06:30', days: [0, 1, 2, 3, 4, 5, 6], steps: [['Estirar y despertar', 10], ['Desayuno', 20], ['Plan del día', 10]] }] },
+      { name: 'Rutina de la mañana', label: 'l2', start: '06:30', days: [0, 1, 2, 3, 4, 5, 6], steps: [['Estirar y despertar', 10], ['Desayuno', 20], ['Plan del día', 10]] }] },
     { k: 'workout', label: 'Entrenamiento', desc: 'Tres veces por semana. Lun, Mié y Vie.', blocks: [
-      { name: 'Entrenamiento', start: '18:00', days: [1, 3, 5], steps: [['Calentamiento', 10], ['Rutina principal', 40], ['Estiramiento', 10]] }] },
+      { name: 'Entrenamiento', label: 'l3', start: '18:00', days: [1, 3, 5], steps: [['Calentamiento', 10], ['Rutina principal', 40], ['Estiramiento', 10]] }] },
     { k: 'study', label: 'Bloque de estudio', desc: 'Repaso y práctica por la noche. Lun–Vie.', blocks: [
-      { name: 'Bloque de estudio', start: '19:30', days: [1, 2, 3, 4, 5], steps: [['Repaso', 25], ['Práctica', 30], ['Resumen', 10]] }] }
+      { name: 'Bloque de estudio', label: 'l4', start: '19:30', days: [1, 2, 3, 4, 5], steps: [['Repaso', 25], ['Práctica', 30], ['Resumen', 10]] }] }
   ];
   function samplesHtml() {
     return (authUser ? '' : '<p>Puedes probar sin iniciar sesión: los datos quedan solo en este navegador.</p>') +
@@ -472,7 +499,7 @@ textarea.in { resize: vertical; min-height: 84px; }
     else if (act === 'loadSample') {
       var smp = SAMPLES.filter(function (x) { return x.k === t.dataset.k; })[0]; if (!smp) return;
       smp.blocks.forEach(function (sb) {
-        state.blocks.push({ id: uid(), name: sb.name, start: sb.start, days: sb.days.slice(), once: '', steps: sb.steps.map(function (st) { return { id: uid(), name: st[0], min: st[1] }; }) });
+        state.blocks.push({ id: uid(), name: sb.name, start: sb.start, days: sb.days.slice(), once: '', label: sb.label || '', steps: sb.steps.map(function (st) { return { id: uid(), name: st[0], min: st[1] }; }) });
       });
       commit(); render();
     }
@@ -504,6 +531,10 @@ textarea.in { resize: vertical; min-height: 84px; }
     document.getElementById('title').textContent = cap(DOW[sel.getDay()]) + ' ' + sel.getDate() + ' de ' + MON[sel.getMonth()];
     var sub = diff === 0 ? 'Hoy' : diff === 1 ? 'Mañana' : diff === -1 ? 'Ayer' : diff > 0 ? 'En ' + diff + ' días' : 'Hace ' + (-diff) + ' días';
     document.getElementById('sub').textContent = sub + ' · ' + sel.getFullYear();
+    var unit = view === 'month' ? 'Mes' : 'Día';
+    var pb = document.querySelector('[data-act="prev"]'), nb = document.querySelector('[data-act="next"]');
+    if (pb) pb.setAttribute('aria-label', unit + ' anterior');
+    if (nb) nb.setAttribute('aria-label', unit + ' siguiente');
   }
   function renderWeek() {
     document.getElementById('week').hidden = view === 'month'; if (view === 'month') return;
@@ -548,7 +579,7 @@ textarea.in { resize: vertical; min-height: 84px; }
       var diff = toMin(dn) - r.to;
       status = 'hecho ' + fmt(toMin(dn)) + (diff ? ' · ' + (diff > 0 ? '+' : '−') + Math.abs(diff) + ' min' : ' · a tiempo');
     } else if (isNow) status = 'en curso';
-    var sub = (showBlock ? esc(b.name) : '') + (showBlock && status ? ' · ' : '') + status;
+    var sub = (showBlock ? (labName(b.label) ? '<span class="ldot" style="--lc:' + labVar(b.label) + '"></span> ' : '') + esc(b.name) : '') + (showBlock && status ? ' · ' : '') + status;
     return '<li class="step' + (dn ? ' done' : '') + (isNow ? ' now' : '') + '"><label>' +
       '<input type="checkbox" data-step="' + esc(s.id) + '"' + (dn ? ' checked' : '') + '>' +
       '<span class="t">' + fmt(r.from) + '</span>' +
@@ -566,9 +597,9 @@ textarea.in { resize: vertical; min-height: 84px; }
       body = '<ul class="steps">' + L.rows.map(function (r) { return stepRow(r, b, done, isToday, nowM, false, false); }).join('') + '</ul>' +
         '<div class="endrow"><span>Fin proceso</span><span><b>' + fmt(L.end) + '</b>' + (all ? '<small>real ' + fmt(lastDone) + '</small>' : '') + '</span></div>';
     }
-    return '<article class="block"><header class="bhead">' +
+    return '<article class="block"' + labAttr(b) + '><header class="bhead">' +
       '<button class="bt" data-act="toggleBlock" data-b="' + esc(b.id) + '" aria-expanded="' + open + '">' + ICON_CHEV +
-      '<span class="bmain"><span class="bname">' + esc(b.name || 'Sin nombre') + '</span><span class="range">' + fmt(L.start) + ' – ' + fmt(L.end) + ' · ' + total + ' min · ' + esc(freqText(b)) + '</span></span></button>' +
+      '<span class="bmain"><span class="bname">' + esc(b.name || 'Sin nombre') + '</span><span class="range">' + fmt(L.start) + ' – ' + fmt(L.end) + ' · ' + total + ' min · ' + esc(freqText(b)) + labTag(b) + '</span></span></button>' +
       '<div class="bright"><span class="bcount">' + nDone + '/' + b.steps.length + '</span><button class="pen" data-act="edit" data-b="' + esc(b.id) + '" aria-label="Editar ' + esc(b.name) + '">' + ICON_PEN + '</button></div></header>' + body + '</article>';
   }
 
@@ -615,11 +646,11 @@ textarea.in { resize: vertical; min-height: 84px; }
       return '<button class="dchip" data-act="toggleDay" data-b="' + id + '" data-d="' + d + '" aria-pressed="' + (b.days.indexOf(d) !== -1) + '" aria-label="' + DOW[d] + '">' + DCHIP[d] + '</button>';
     }).join('');
     var extra = kind === 'days' ? '<div class="fl"><span>Días</span><div class="days">' + chips + '</div></div>'
-      : kind === 'once' ? '<label class="fl"><span>Fecha</span><input class="in" id="f-once" type="date" data-b="' + id + '" data-f="once" value="' + esc(b.once) + '"></label>' : '';
-    var freq = '<label class="fl"><span>Frecuencia</span><select class="in" id="f-freq" data-b="' + id + '" data-f="freq">' +
-      '<option value="all"' + (kind === 'all' ? ' selected' : '') + '>Todos los días (lun–dom)</option>' + '<option value="ls"' + (kind === 'ls' ? ' selected' : '') + '>Lunes a sábado</option>' +
-      '<option value="days"' + (kind === 'days' ? ' selected' : '') + '>Solo algunos días</option>' +
-      '<option value="once"' + (kind === 'once' ? ' selected' : '') + '>Solo una vez</option></select></label>';
+      : kind === 'once' ? '<label class="fl"><span>Fecha del evento</span><input class="in" id="f-once" type="date" data-b="' + id + '" data-f="once" value="' + esc(b.once) + '"></label>' : '';
+    var freq = '<label class="fl"><span>¿Cada cuánto?</span><select class="in" id="f-freq" data-b="' + id + '" data-f="freq">' +
+      '<option value="all"' + (kind === 'all' ? ' selected' : '') + '>Se repite todos los días (lun–dom)</option>' + '<option value="ls"' + (kind === 'ls' ? ' selected' : '') + '>Se repite de lunes a sábado</option>' +
+      '<option value="days"' + (kind === 'days' ? ' selected' : '') + '>Se repite en días específicos</option>' +
+      '<option value="once"' + (kind === 'once' ? ' selected' : '') + '>Evento de un solo día (elegir fecha)</option></select></label>';
     var stepsHtml;
     if (isNew) {
       stepsHtml = '<div class="fgrid"><label class="fl"><span>Pasos (opcional)</span><textarea class="in" id="f-raw" data-b="' + id + '" data-f="raw" placeholder="Uno por línea: nombre, minutos&#10;Descarga del reporte, 2&#10;Pegar datos, 5">' + esc(b.raw) + '</textarea></label>' +
@@ -640,7 +671,7 @@ textarea.in { resize: vertical; min-height: 84px; }
       '<h2 class="edit-title">' + (isNew ? 'Nueva actividad' : 'Editar actividad') + '</h2>' +
       '<div class="fgrid"><label class="fl"><span>Nombre</span><input class="in" id="f-name" data-b="' + id + '" data-f="name" value="' + esc(b.name) + '" placeholder="Ej. Distribución Pompom"></label>' +
       '<label class="fl"><span>Hora de inicio</span><input class="in" id="f-start" type="time" data-b="' + id + '" data-f="start" value="' + esc(hhmm(toMin(b.start))) + '"></label></div>' +
-      '<div class="fgrid two">' + freq + extra + '</div>' + stepsHtml +
+      '<div class="fgrid two">' + freq + extra + '</div>' + labelField(b) + stepsHtml +
       (b.err ? '<p class="err" role="alert">' + esc(b.err) + '</p>' : '') + actions + '</div></article>';
   }
 
@@ -655,14 +686,16 @@ textarea.in { resize: vertical; min-height: 84px; }
     var lead = (new Date(y, m, 1, 12).getDay() + 6) % 7;
     var days = new Date(y, m + 1, 0).getDate(), rows = Math.ceil((lead + days) / 7);
     var todayK = keyOf(new Date()), selK = keyOf(sel);
-    var h = '<div class="mhead"><button class="btn icon" data-act="monthPrev" aria-label="Mes anterior">←</button><h2 class="mtitle">' + cap(MON[m]) + ' ' + y + '</h2><button class="btn icon" data-act="monthNext" aria-label="Mes siguiente">→</button></div><div class="mgrid">';
+    var mo = MON.map(function (n, i) { return '<option value="' + i + '"' + (i === m ? ' selected' : '') + '>' + cap(n) + '</option>'; }).join('');
+    var yo = ''; for (var yy = y - 3; yy <= y + 5; yy++) yo += '<option value="' + yy + '"' + (yy === y ? ' selected' : '') + '>' + yy + '</option>';
+    var h = '<div class="mhead"><button class="btn icon" data-act="monthPrev" aria-label="Mes anterior">←</button><div class="mcenter"><select class="msel" id="m-month" aria-label="Mes">' + mo + '</select><select class="msel" id="m-year" aria-label="Año">' + yo + '</select></div><button class="btn icon" data-act="monthNext" aria-label="Mes siguiente">→</button></div><div class="mgrid">';
     ['L', 'M', 'X', 'J', 'V', 'S', 'D'].forEach(function (x) { h += '<div class="mdow">' + x + '</div>'; });
     for (var i = 0; i < rows * 7; i++) {
       var d = new Date(y, m, 1 - lead + i, 12), k = keyOf(d), list = blocksFor(d), p = dayProgress(d);
-      var chips = list.slice(0, 3).map(function (b) { return '<span class="mchip"><i>' + fmt(toMin(b.start)) + '</i>' + esc(b.name || 'Sin nombre') + '</span>'; }).join('');
+      var chips = list.slice(0, 3).map(function (b) { return '<span class="mchip"' + (labName(b.label) ? ' style="--lc:' + labVar(b.label) + '"' : '') + '><i>' + fmt(toMin(b.start)) + '</i>' + esc(b.name || 'Sin nombre') + '</span>'; }).join('');
       if (list.length > 3) chips += '<span class="mmore">+' + (list.length - 3) + ' más</span>';
       h += '<button class="mcell' + (d.getMonth() !== m ? ' out' : '') + (k === todayK ? ' today' : '') + (k === selK ? ' sel' : '') + '" data-act="pickDay" data-k="' + k + '" aria-label="' + d.getDate() + ' de ' + MON[d.getMonth()] + ', ' + list.length + ' actividades">' +
-        '<span class="mnum">' + d.getDate() + '</span>' + chips + (list.length ? '<span class="mcnt">' + list.length + '</span>' : '') +
+        '<span class="mnum">' + d.getDate() + '</span>' + chips + (list.length ? '<span class="mdots">' + list.slice(0, 4).map(function (b) { return '<i style="--lc:' + (labName(b.label) ? labVar(b.label) : 'var(--ink-2)') + '"></i>'; }).join('') + '</span>' : '') +
         (p.total ? '<span class="mbar"><i style="width:' + Math.round(p.done / p.total * 100) + '%"></i></span>' : '') + '</button>';
     }
     h += '</div><div class="mday"><div class="mdayhead"><h3>' + cap(DOW[sel.getDay()]) + ' ' + sel.getDate() + ' de ' + MON[sel.getMonth()] + '</h3><button class="btn small" data-act="newOnDay">+ Agregar en este día</button></div>';
@@ -693,11 +726,39 @@ textarea.in { resize: vertical; min-height: 84px; }
   }
   function renderViewbar() {
     var el = document.getElementById('viewbar'), bl = blocksFor(sel);
-    if (!state.blocks.length) { el.hidden = true; el.innerHTML = ''; return; }
     el.hidden = false;
     var anyOpen = view === 'hour' ? lastHours.some(function (h) { return hourOpen[h]; }) : bl.some(function (b) { return collapsed[b.id] === false; });
     el.innerHTML = '<div class="seg" role="group" aria-label="Vista"><button data-act="setView" data-v="list" aria-pressed="' + (view === 'list') + '">Lista</button><button data-act="setView" data-v="hour" aria-pressed="' + (view === 'hour') + '">Por hora</button><button data-act="setView" data-v="month" aria-pressed="' + (view === 'month') + '">Mes</button></div>' +
       ((view !== 'month' && bl.length) ? '<button class="btn small ghost" data-act="toggleAll">' + (anyOpen ? 'Plegar todo' : 'Desplegar todo') + '</button>' : '');
+  }
+  function usedLabels() {
+    var seen = {}, out = [];
+    state.blocks.forEach(function (b) { if (b.label && labName(b.label) && !seen[b.label]) { seen[b.label] = 1; out.push(b.label); } });
+    return out.sort();
+  }
+  function renderLabelbar() {
+    var el = document.getElementById('labelbar'), used = usedLabels();
+    if (used.indexOf(filterLabel) === -1) filterLabel = '';
+    if (!used.length) { el.hidden = true; el.innerHTML = ''; return; }
+    el.hidden = false;
+    el.innerHTML = '<button class="lchip" data-act="filterLabel" data-l="" aria-pressed="' + (filterLabel === '') + '">Todas</button>' +
+      used.map(function (l) { return '<button class="lchip" data-act="filterLabel" data-l="' + l + '" aria-pressed="' + (filterLabel === l) + '"><span class="ldot" style="--lc:' + labVar(l) + '"></span>' + esc(labName(l)) + '</button>'; }).join('');
+  }
+  function renderLabelsPanel() {
+    var el = document.getElementById('labelsPanel');
+    if (!labelsOpen) { el.hidden = true; el.innerHTML = ''; return; }
+    el.hidden = false;
+    el.innerHTML = '<div class="edit-body"><h2 class="edit-title">Etiquetas</h2><p class="hint">Hasta cinco, cada una con su color. Deja vacío el nombre de las que no uses.</p><div class="lrows">' +
+      state.labelNames.map(function (n, i) { return '<label class="lrow"><span class="ldot" style="--lc:var(--t' + (i + 1) + ')"></span><input class="in" id="lb-' + i + '" data-lb="' + i + '" value="' + esc(n) + '" placeholder="Etiqueta ' + (i + 1) + '" maxlength="24" aria-label="Nombre de la etiqueta ' + (i + 1) + '"></label>'; }).join('') +
+      '</div><div class="actions"><div class="left"><button class="btn primary" data-act="toggleLabels">Listo</button></div></div></div>';
+  }
+  function labelField(b) {
+    var names = [];
+    state.labelNames.forEach(function (n, i) { if (n) names.push({ l: 'l' + (i + 1), n: n, i: i }); });
+    if (!names.length) return '';
+    var h = '<div class="fl"><span>Etiqueta</span><div class="days"><button class="dchip" data-act="setLabel" data-b="' + esc(b.id) + '" data-l="" aria-pressed="' + (!b.label) + '">Ninguna</button>';
+    names.forEach(function (x) { h += '<button class="dchip" data-act="setLabel" data-b="' + esc(b.id) + '" data-l="' + x.l + '" aria-pressed="' + (b.label === x.l) + '"><span class="ldot" style="--lc:var(--t' + (x.i + 1) + ')"></span>' + esc(x.n) + '</button>'; });
+    return h + '</div></div>';
   }
   function renderNote() {
     var box = document.getElementById('noteBox'), v = state.notes[keyOf(sel)] || '';
@@ -705,6 +766,7 @@ textarea.in { resize: vertical; min-height: 84px; }
   }
   function renderTools() {
     var html = '<div class="left"><button class="btn primary" data-act="newBlock">+ Nueva actividad</button>';
+    html += '<button class="btn ghost" data-act="toggleLabels">Etiquetas</button>';
     if (blocksFor(sel).length) html += '<button class="btn ghost" data-act="resetDay">Reiniciar este día</button>';
     html += '</div><div class="acct">';
     if (configured() && fb) {
@@ -716,7 +778,7 @@ textarea.in { resize: vertical; min-height: 84px; }
     document.getElementById('tools').innerHTML = html;
   }
   function renderList() { renderBlocks(); renderViewbar(); }
-  function render() { renderHead(); renderWeek(); renderSummary(); renderBlocks(); renderViewbar(); renderGuestbar(); renderNote(); renderTools(); }
+  function render() { renderHead(); renderWeek(); renderSummary(); renderBlocks(); renderViewbar(); renderLabelbar(); renderLabelsPanel(); renderGuestbar(); renderNote(); renderTools(); }
 
   /* ---------- acciones ---------- */
   function step(dir) { var d = new Date(sel); d.setDate(d.getDate() + dir); sel = noon(d); syncMonth(); }
@@ -733,14 +795,14 @@ textarea.in { resize: vertical; min-height: 84px; }
     });
   }
   function newDraft() {
-    return { id: 'draft', name: '', start: '08:00', days: [0, 1, 2, 3, 4, 5, 6], once: '', raw: '', dur: 30, err: '', steps: [] };
+    return { id: 'draft', name: '', start: '08:00', days: [0, 1, 2, 3, 4, 5, 6], once: '', label: '', raw: '', dur: 30, err: '', steps: [] };
   }
 
   document.addEventListener('click', function (e) {
     var t = e.target.closest('[data-act]'); if (!t) return;
     var act = t.dataset.act, b;
-    if (act === 'prev') { step(-1); render(); }
-    else if (act === 'next') { step(1); render(); }
+    if (act === 'prev') { if (view === 'month') shiftMonth(-1); else step(-1); render(); }
+    else if (act === 'next') { if (view === 'month') shiftMonth(1); else step(1); render(); }
     else if (act === 'today') { sel = noon(new Date()); syncMonth(); render(); }
     else if (act === 'pick') { sel = parseKey(t.dataset.k); render(); }
     else if (act === 'setView') { view = t.dataset.v; if (view === 'month') syncMonth(); else { try { localStorage.setItem(LS_VIEW, view); } catch (x) {} } render(); }
@@ -766,7 +828,8 @@ textarea.in { resize: vertical; min-height: 84px; }
       if (d.err) { renderList(); return; }
       var steps = parseSteps(d.raw);
       if (!steps.length) steps = [{ id: uid(), name: d.name.trim(), min: Math.max(1, parseInt(d.dur, 10) || 30) }];
-      state.blocks.push({ id: uid(), name: d.name.trim(), start: d.start, days: d.days.slice(), once: d.once || '', steps: steps });
+      state.blocks.push({ id: uid(), name: d.name.trim(), start: d.start, days: d.days.slice(), once: d.once || '', label: d.label || '', steps: steps });
+      if (filterLabel && (d.label || '') !== filterLabel) filterLabel = '';
       if (d.once) sel = parseKey(d.once);
       draft = null; commit(); render();
     }
@@ -807,6 +870,7 @@ textarea.in { resize: vertical; min-height: 84px; }
 
   document.addEventListener('input', function (e) {
     var t = e.target; if (!t.dataset) return;
+    if (t.dataset.lb !== undefined) { state.labelNames[+t.dataset.lb] = t.value; commit(); renderBlocks(); renderLabelbar(); return; }
     if (t.id === 'noteBox') {
       var k = keyOf(sel);
       if (t.value) state.notes[k] = t.value; else delete state.notes[k];
@@ -833,11 +897,32 @@ textarea.in { resize: vertical; min-height: 84px; }
     if (act === 'monthPrev') { monthRef = new Date(monthRef.getFullYear(), monthRef.getMonth() - 1, 1, 12); renderBlocks(); }
     else if (act === 'monthNext') { monthRef = new Date(monthRef.getFullYear(), monthRef.getMonth() + 1, 1, 12); renderBlocks(); }
     else if (act === 'pickDay') { sel = parseKey(t.dataset.k); syncMonth(); render(); }
+    else if (act === 'toggleLabels') { labelsOpen = !labelsOpen; renderLabelsPanel(); if (labelsOpen) { var lb = document.getElementById('lb-0'); if (lb) lb.focus(); } }
+    else if (act === 'setLabel') { var bb = findBlock(t.dataset.b); if (bb) { bb.label = t.dataset.l || ''; touch(bb); render(); } }
+    else if (act === 'filterLabel') { filterLabel = (t.dataset.l === filterLabel) ? '' : (t.dataset.l || ''); render(); }
     else if (act === 'newOnDay') {
       draft = newDraft(); draft.once = keyOf(sel); editId = null; renderList();
       var f = document.getElementById('f-name'); if (f) { f.focus(); f.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
     }
   });
+
+  document.addEventListener('change', function (e) {
+    var t = e.target;
+    if (t.id === 'm-month' || t.id === 'm-year') {
+      monthRef = new Date(+document.getElementById('m-year').value, +document.getElementById('m-month').value, 1, 12);
+      renderBlocks();
+    }
+  });
+  var tx = null, ty = null;
+  document.addEventListener('touchstart', function (e) {
+    if (view !== 'month' || !e.target.closest || !e.target.closest('.mgrid')) { tx = null; return; }
+    tx = e.touches[0].clientX; ty = e.touches[0].clientY;
+  }, { passive: true });
+  document.addEventListener('touchend', function (e) {
+    if (tx === null) return;
+    var dx = e.changedTouches[0].clientX - tx, dy = e.changedTouches[0].clientY - ty; tx = null;
+    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) { shiftMonth(dx < 0 ? 1 : -1); renderBlocks(); }
+  }, { passive: true });
 
   var lastToday = keyOf(new Date());
   function tick() {
