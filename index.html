@@ -4,10 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#1b6e55">
-<title>Labores del Día</title>
+<title>Actividades del Día</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Public+Sans:wght@400;500;600&display=swap">
 <style>
-/* Layout: hoja de turno en una columna. Fecha, tira semanal L–S, resumen con "siguiente paso", selector Lista / Por hora, y tarjetas de labor plegables con lápiz para editar. Un solo acento sobre neutros fríos. */
+/* Layout: hoja de turno en una columna. Fecha, tira semanal L–S, resumen con "siguiente paso", selector Lista / Por hora, y tarjetas de actividad plegables con lápiz para editar. Un solo acento sobre neutros fríos. */
 :root {
   --bg: #e9edf1;
   --surface: #ffffff;
@@ -189,7 +189,7 @@ textarea.in { resize: vertical; min-height: 84px; }
 <main class="app">
   <header class="top">
     <div>
-      <p class="eyebrow">Labores diarias</p>
+      <p class="eyebrow">Actividades diarias</p>
       <h1 id="title"></h1>
       <p class="sub" id="sub"></p>
     </div>
@@ -425,7 +425,7 @@ textarea.in { resize: vertical; min-height: 84px; }
   /* ---------- cuenta y respaldo ---------- */
   function exportBackup() {
     var url = URL.createObjectURL(new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' }));
-    var a = document.createElement('a'); a.href = url; a.download = 'labores-respaldo-' + keyOf(new Date()) + '.json';
+    var a = document.createElement('a'); a.href = url; a.download = 'actividades-respaldo-' + keyOf(new Date()) + '.json';
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(function () { URL.revokeObjectURL(url); }, 1500);
   }
@@ -491,7 +491,7 @@ textarea.in { resize: vertical; min-height: 84px; }
     var el = document.getElementById('summary'), bl = blocksFor(sel);
     if (!bl.length) {
       el.style.gridTemplateColumns = '1fr';
-      el.innerHTML = '<div><div class="sum-time" style="font-size:20px">' + 'Sin labores este día' + '</div><div class="sum-sub">Agrega una con “Nueva labor”.</div></div>';
+      el.innerHTML = '<div><div class="sum-time" style="font-size:20px">' + 'Sin actividades este día' + '</div><div class="sum-sub">Agrega una con “Nueva actividad”.</div></div>';
       return;
     }
     el.style.gridTemplateColumns = '';
@@ -507,7 +507,7 @@ textarea.in { resize: vertical; min-height: 84px; }
     else if (isToday) { var r = pend[0]; line = (nowM >= r.from && nowM < r.to ? 'En curso: ' : 'Siguiente: ') + (r.step.name || 'paso') + ' · ' + fmt(r.from); }
     else line = pend.length + (pend.length === 1 ? ' paso pendiente' : ' pasos pendientes');
     var pct = steps ? Math.round(n / steps * 100) : 0;
-    el.innerHTML = '<div><div class="sum-time">' + fmt(start) + ' → ' + fmt(end) + '</div><div class="sum-sub">' + bl.length + (bl.length === 1 ? ' labor' : ' labores') + ' · ' + total + ' min de trabajo</div><div class="sum-next">' + esc(line) + '</div></div>' +
+    el.innerHTML = '<div><div class="sum-time">' + fmt(start) + ' → ' + fmt(end) + '</div><div class="sum-sub">' + bl.length + (bl.length === 1 ? ' actividad' : ' actividades') + ' · ' + total + ' min de trabajo</div><div class="sum-next">' + esc(line) + '</div></div>' +
       '<div><div class="prog-label"><span>Avance</span><b>' + n + ' de ' + steps + ' pasos</b></div><div class="prog" role="progressbar" aria-valuenow="' + pct + '" aria-valuemin="0" aria-valuemax="100"><i style="width:' + pct + '%"></i></div></div>';
   }
 
@@ -603,10 +603,10 @@ textarea.in { resize: vertical; min-height: 84px; }
         '<p class="hint">Las horas de cada paso se calculan solas desde la hora de inicio.</p>';
     }
     var actions = isNew
-      ? '<div class="actions"><div class="left"><button class="btn primary" data-act="saveDraft">Crear labor</button><button class="btn" data-act="cancelDraft">Cancelar</button></div></div>'
-      : '<div class="actions"><div class="left"><button class="btn primary" data-act="doneEdit">Listo</button></div><button class="btn small danger" data-act="delBlock" data-b="' + id + '">Eliminar labor</button></div>';
+      ? '<div class="actions"><div class="left"><button class="btn primary" data-act="saveDraft">Crear actividad</button><button class="btn" data-act="cancelDraft">Cancelar</button></div></div>'
+      : '<div class="actions"><div class="left"><button class="btn primary" data-act="doneEdit">Listo</button></div><button class="btn small danger" data-act="delBlock" data-b="' + id + '">Eliminar actividad</button></div>';
     return '<article class="block"><div class="edit-body">' +
-      '<h2 class="edit-title">' + (isNew ? 'Nueva labor' : 'Editar labor') + '</h2>' +
+      '<h2 class="edit-title">' + (isNew ? 'Nueva actividad' : 'Editar actividad') + '</h2>' +
       '<div class="fgrid"><label class="fl"><span>Nombre</span><input class="in" id="f-name" data-b="' + id + '" data-f="name" value="' + esc(b.name) + '" placeholder="Ej. Distribución Pompom"></label>' +
       '<label class="fl"><span>Hora de inicio</span><input class="in" id="f-start" type="time" data-b="' + id + '" data-f="start" value="' + esc(hhmm(toMin(b.start))) + '"></label></div>' +
       '<div class="fgrid two">' + freq + extra + '</div>' + stepsHtml +
@@ -628,7 +628,7 @@ textarea.in { resize: vertical; min-height: 84px; }
       bl.forEach(function (b) { html += (eb && b === eb) ? editPanel(b, false) : viewBlock(b, done, isToday, nowM); });
       lastHours = [];
     }
-    if (!html) html = '<div class="emptycard"><b>' + (!state.blocks.length ? 'Empieza tu agenda' : 'Nada programado') + '</b><p>Usa “Nueva labor” para agregar una con su hora y frecuencia.</p>' + (!state.blocks.length ? samplesHtml() : '') + '</div>';
+    if (!html) html = '<div class="emptycard"><b>' + (!state.blocks.length ? 'Empieza tu agenda' : 'Nada programado') + '</b><p>Usa “Nueva actividad” para agregar una con su hora y frecuencia.</p>' + (!state.blocks.length ? samplesHtml() : '') + '</div>';
     el.innerHTML = html;
   }
   function renderViewbar() {
@@ -644,7 +644,7 @@ textarea.in { resize: vertical; min-height: 84px; }
     if (document.activeElement !== box) box.value = v;
   }
   function renderTools() {
-    var html = '<div class="left"><button class="btn primary" data-act="newBlock">+ Nueva labor</button>';
+    var html = '<div class="left"><button class="btn primary" data-act="newBlock">+ Nueva actividad</button>';
     if (blocksFor(sel).length) html += '<button class="btn ghost" data-act="resetDay">Reiniciar este día</button>';
     html += '</div><div class="acct">';
     if (configured() && fb) {
@@ -699,7 +699,7 @@ textarea.in { resize: vertical; min-height: 84px; }
     else if (act === 'cancelDraft') { draft = null; renderList(); }
     else if (act === 'saveDraft') {
       var d = draft; if (!d) return;
-      if (!d.name.trim()) d.err = 'Escribe el nombre de la labor.';
+      if (!d.name.trim()) d.err = 'Escribe el nombre de la actividad.';
       else if (!/^\d{1,2}:\d{2}/.test(d.start)) d.err = 'Elige la hora de inicio.';
       else if (!d.once && !d.days.length && freqKind(d) !== 'once') d.err = 'Elige al menos un día.';
       else d.err = '';
