@@ -82,7 +82,8 @@ h1 { font: 700 clamp(30px, 7vw, 46px)/1 var(--f-display); margin: 0; text-wrap: 
 .day[aria-current="true"] .bar i { background: var(--surface); }
 
 .summary { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 240px); gap: 16px; align-items: center; }
-.sum-time { font: 600 26px/1.1 var(--f-mono); letter-spacing: -.02em; }
+.sum-time { font: 600 19px/1.15 var(--f-mono); letter-spacing: -.01em; }
+.sum-time small { font: 500 11px var(--f-body, inherit); letter-spacing: .06em; text-transform: uppercase; color: var(--ink-2); margin-inline: 2px 6px; }
 .sum-sub { color: var(--ink-2); font-size: 13px; margin-top: 4px; }
 .sum-next { margin-top: 8px; font-size: 13px; font-weight: 500; color: var(--accent); overflow-wrap: anywhere; }
 .prog-label { display: flex; justify-content: space-between; font-size: 13px; color: var(--ink-2); margin-bottom: 6px; }
@@ -129,12 +130,23 @@ h1 { font: 700 clamp(30px, 7vw, 46px)/1 var(--f-display); margin: 0; text-wrap: 
 .cols > .editing, .cols > .emptycard { grid-column: 1 / -1; }
 .hour { display: grid; grid-template-columns: 3.4rem minmax(0, 1fr); gap: 12px; }
 .hlabel { font: 600 15px var(--f-mono); color: var(--ink-2); padding-top: 13px; text-align: right; }
+.hcol { min-width: 0; }
 .hcard { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; margin-bottom: 8px; min-width: 0; }
 .hcard.empty { background: transparent; border-style: dashed; padding: 10px 14px; color: var(--ink-2); font-size: 13px; }
 .hhead { width: 100%; display: flex; align-items: center; gap: 8px; text-align: left; background: transparent; border: 0; cursor: pointer; padding: 11px 14px 11px 10px; }
 .hhead:hover { background: var(--surface-2); }
 .hmain { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.hmain b { font-weight: 600; font-size: 14px; }
+.hmain b { font-weight: 600; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hmain .hmeta { font-size: 12px; color: var(--ink-2); }
+.hmain .htime { font: 600 12px var(--f-mono); color: var(--ink); background: var(--surface-2); border-radius: 4px; padding: 1px 5px; margin-right: 2px; }
+.hcard[data-lab] { border-left: 4px solid var(--lc); }
+.hcard.cont { opacity: .9; }
+.pen.chk { width: 32px; height: 32px; }
+.pen.chk[aria-pressed="true"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+.conflict { border: 1px solid var(--danger); background: color-mix(in srgb, var(--danger) 8%, var(--surface)); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.conflict p { margin: 0; font-size: 14px; }
+.conflict ul { margin: 0; padding-left: 18px; font-size: 13px; color: var(--ink-2); }
+.conflict .row { display: flex; gap: 8px; flex-wrap: wrap; }
 .hmain span { font-size: 12px; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .hmain .nowtag { color: var(--accent); font-weight: 600; font-family: var(--f-mono); }
 .hcard .steps { border-top: 1px solid var(--line); }
@@ -272,6 +284,7 @@ textarea.in { resize: vertical; min-height: 84px; }
   var MONS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
   var LS_KEY = 'labores-del-dia-v1', LS_VIEW = 'labores-del-dia-vista';
   var ICON_PEN = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>';
+  var ICON_CHECK = '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12.5l4.5 4.5L14 8"/><path d="M12 15l2 2 8-9"/></svg>';
   var ICON_CHEV = '<svg class="chev" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
 
   function pad(n) { return String(n).padStart(2, '0'); }
@@ -319,7 +332,7 @@ textarea.in { resize: vertical; min-height: 84px; }
   var monthRef = new Date(sel.getFullYear(), sel.getMonth(), 1, 12);
   function syncMonth() { monthRef = new Date(sel.getFullYear(), sel.getMonth(), 1, 12); }
   function shiftMonth(n) { monthRef = new Date(monthRef.getFullYear(), monthRef.getMonth() + n, 1, 12); }
-  var filterLabel = '', labelsOpen = false;
+  var filterLabel = '', labelsOpen = false, conflict = null, editSnap = null;
   var view = 'list';
   try { if (localStorage.getItem(LS_VIEW) === 'hour') view = 'hour'; } catch (e) {}
   var editId = null, draft = null;
@@ -332,6 +345,35 @@ textarea.in { resize: vertical; min-height: 84px; }
     var cur = toMin(b.start), rows = [];
     b.steps.forEach(function (s) { rows.push({ step: s, from: cur, to: cur + s.min }); cur += s.min; });
     return { rows: rows, start: toMin(b.start), end: cur };
+  }
+  function isSimple(b) { return b.steps.length === 1 && (!b.steps[0].name || b.steps[0].name === b.name); }
+  function blockEnd(b) { var m = toMin(b.start); b.steps.forEach(function (x) { m += x.min; }); return m; }
+  function blockDur(b) { return blockEnd(b) - toMin(b.start); }
+  function sharesDay(a, b) {
+    if (a.once && b.once) return a.once === b.once;
+    if (a.once) return b.days.indexOf(parseKey(a.once).getDay()) !== -1;
+    if (b.once) return a.days.indexOf(parseKey(b.once).getDay()) !== -1;
+    return a.days.some(function (d) { return b.days.indexOf(d) !== -1; });
+  }
+  /* Si E se cruza con otras actividades, calcula cómo correrlas (en cascada) para que no se pisen. */
+  function planMoves(E) {
+    var list = [E].concat(state.blocks.filter(function (x) { return x.id !== E.id && sharesDay(E, x); })), pos = {}, moved = {}, hit = [];
+    list.forEach(function (x) { pos[x.id] = toMin(x.start); });
+    list.forEach(function (x) { if (x !== E && pos[x.id] < pos[E.id] + blockDur(E) && pos[E.id] < pos[x.id] + blockDur(x)) hit.push(x); });
+    if (!hit.length) return null;
+    hit.forEach(function (x) { if (pos[x.id] < pos[E.id]) { pos[E.id] = Math.max(pos[E.id], pos[x.id] + blockDur(x)); moved[E.id] = 1; } });
+    moved[E.id] = moved[E.id] || 0;
+    var anchor = {}; anchor[E.id] = 1;
+    for (var it = 0; it < 40; it++) {
+      var changed = false, arr = list.slice().sort(function (a, b) { return pos[a.id] - pos[b.id]; });
+      for (var i = 0; i < arr.length; i++) for (var j = i + 1; j < arr.length; j++) {
+        var a = arr[i], c = arr[j];
+        if (anchor[a.id] && c !== E && pos[c.id] < pos[a.id] + blockDur(a) && pos[a.id] < pos[c.id] + blockDur(c)) { pos[c.id] = pos[a.id] + blockDur(a); moved[c.id] = 1; anchor[c.id] = 1; changed = true; }
+      }
+      if (!changed) break;
+    }
+    var fits = list.every(function (x) { return pos[x.id] + blockDur(x) <= 1440; });
+    return { hit: hit, fits: fits, moves: list.filter(function (x) { return pos[x.id] !== toMin(x.start); }).map(function (x) { return { b: x, from: toMin(x.start), to: pos[x.id], self: x === E }; }) };
   }
   function runsOn(b, d) { return (b.once ? b.once === keyOf(d) : b.days.indexOf(d.getDay()) !== -1); }
   function blocksFor(d) {
@@ -576,10 +618,10 @@ textarea.in { resize: vertical; min-height: 84px; }
       return;
     }
     el.style.gridTemplateColumns = '';
-    var start = Infinity, end = 0, total = 0, n = 0, steps = 0, pend = [];
+    var start = Infinity, end = 0, total = 0, n = 0, steps = 0, pend = [], spans = [];
     var done = state.done[keyOf(sel)] || {};
     bl.forEach(function (b) {
-      var L = layout(b); start = Math.min(start, L.start); end = Math.max(end, L.end);
+      var L = layout(b); start = Math.min(start, L.start); end = Math.max(end, L.end); spans.push([L.start, L.end]);
       L.rows.forEach(function (r) { steps++; total += r.step.min; if (done[r.step.id]) n++; else pend.push(r); });
     });
     pend.sort(function (a, b) { return a.from - b.from; });
@@ -588,7 +630,11 @@ textarea.in { resize: vertical; min-height: 84px; }
     else if (isToday) { var r = pend[0]; line = (nowM >= r.from && nowM < r.to ? 'En curso: ' : 'Siguiente: ') + (r.step.name || 'paso') + ' · ' + fmt(r.from); }
     else line = pend.length + (pend.length === 1 ? ' paso pendiente' : ' pasos pendientes');
     var pct = steps ? Math.round(n / steps * 100) : 0;
-    el.innerHTML = '<div><div class="sum-time">' + fmt(start) + ' → ' + fmt(end) + '</div><div class="sum-sub">' + bl.length + (bl.length === 1 ? ' actividad' : ' actividades') + ' · ' + total + ' min de trabajo</div><div class="sum-next">' + esc(line) + '</div></div>' +
+    spans.sort(function (a, b) { return a[0] - b[0]; });
+    var covered = 0, ce = -1;
+    spans.forEach(function (x) { if (x[0] > ce) { covered += x[1] - x[0]; ce = x[1]; } else if (x[1] > ce) { covered += x[1] - ce; ce = x[1]; } });
+    var gap = (end - start) - covered;
+    el.innerHTML = '<div><div class="sum-time"><small>Inicio</small>' + fmt(start) + ' <small>Fin</small>' + fmt(end) + '</div><div class="sum-sub">' + bl.length + (bl.length === 1 ? ' actividad' : ' actividades') + ' · ' + total + ' min de trabajo' + (gap >= 5 ? ' · ' + gap + ' min libres entre medias' : '') + '</div><div class="sum-next">' + esc(line) + '</div></div>' +
       '<div><div class="prog-label"><span>Avance</span><b>' + n + ' de ' + steps + ' pasos</b></div><div class="prog" role="progressbar" aria-valuenow="' + pct + '" aria-valuemin="0" aria-valuemax="100"><i style="width:' + pct + '%"></i></div></div>';
   }
 
@@ -619,7 +665,7 @@ textarea.in { resize: vertical; min-height: 84px; }
     return '<article class="block"' + labAttr(b) + '><header class="bhead">' +
       '<button class="bt" data-act="toggleBlock" data-b="' + esc(b.id) + '" aria-expanded="' + open + '">' + ICON_CHEV +
       '<span class="bmain"><span class="bname">' + esc(b.name || 'Sin nombre') + '</span><span class="range">' + fmt(L.start) + ' – ' + fmt(L.end) + ' · ' + total + ' min · ' + esc(freqText(b)) + labTag(b) + '</span></span></button>' +
-      '<div class="bright"><span class="bcount">' + nDone + '/' + b.steps.length + '</span><button class="pen" data-act="edit" data-b="' + esc(b.id) + '" aria-label="Editar ' + esc(b.name) + '">' + ICON_PEN + '</button></div></header>' + body + '</article>';
+      '<div class="bright"><span class="bcount">' + nDone + '/' + b.steps.length + '</span>' + (b.steps.length ? '<button class="pen chk" data-act="markAll" data-b="' + esc(b.id) + '" aria-pressed="' + !!all + '" aria-label="' + (all ? 'Desmarcar todo' : (b.steps.length > 1 ? 'Marcar todos los pasos' : 'Marcar como hecha')) + '" title="' + (all ? 'Desmarcar todo' : (b.steps.length > 1 ? 'Marcar todos los pasos' : 'Marcar como hecha')) + '">' + ICON_CHECK + '</button>' : '') + '<button class="pen" data-act="edit" data-b="' + esc(b.id) + '" aria-label="Editar ' + esc(b.name) + '">' + ICON_PEN + '</button></div></header>' + body + '</article>';
   }
 
   function hourView(bl, done, isToday, nowM) {
@@ -631,34 +677,53 @@ textarea.in { resize: vertical; min-height: 84px; }
     items.forEach(function (i) { maxEnd = Math.max(maxEnd, i.r.to); });
     var maxH = Math.floor((maxEnd - 1) / 60);
     lastHours = [];
+    /* un grupo = pasos de una misma actividad dentro de una misma hora */
     var byHour = {};
-    items.forEach(function (i) { var h = Math.floor(i.r.from / 60); (byHour[h] = byHour[h] || []).push(i); });
-    if (hourKey !== keyOf(sel)) {
-      hourKey = keyOf(sel); hourOpen = {};
-    }
+    items.forEach(function (i) {
+      var h = Math.floor(i.r.from / 60), arr = (byHour[h] = byHour[h] || []), g = arr.filter(function (x) { return x.b === i.b; })[0];
+      if (!g) { g = { b: i.b, its: [] }; arr.push(g); }
+      g.its.push(i);
+    });
+    if (hourKey !== keyOf(sel)) { hourKey = keyOf(sel); hourOpen = {}; }
     var html = '<div class="hours">';
     for (var h = minH; h <= maxH; h++) {
-      var its = byHour[h];
-      if (!its) {
+      var groups = byHour[h];
+      if (!groups) {
         var cont = items.filter(function (i) { return i.r.from < h * 60 && i.r.to > h * 60; })[0];
-        html += '<div class="hour"><div class="hlabel">' + h + ':00</div><div class="hcard empty">' + (cont ? 'Continúa: ' + esc(cont.r.step.name || cont.b.name) : 'Sin pasos') + '</div></div>';
+        html += '<div class="hour"><div class="hlabel">' + h + ':00</div><div class="hcol"><div class="hcard empty">' + (cont ? 'Continúa: ' + esc(cont.b.name || cont.r.step.name) : 'Libre') + '</div></div></div>';
         continue;
       }
-      lastHours.push(h);
-      var open = !!hourOpen[h], mins = 0, nd = 0;
-      its.forEach(function (i) { mins += i.r.step.min; if (done[i.r.step.id]) nd++; });
-      var names = its.map(function (i) { return i.r.step.name || 'Sin nombre'; }).join(' · ');
-      var isNowHour = isToday && Math.floor(nowM / 60) === h;
-      html += '<div class="hour"><div class="hlabel">' + h + ':00</div><div class="hcard">' +
-        '<button class="hhead" data-act="toggleHour" data-h="' + h + '" aria-expanded="' + open + '">' + ICON_CHEV +
-        '<span class="hmain"><b>' + its.length + (its.length === 1 ? ' paso' : ' pasos') + ' · ' + mins + ' min' + (isNowHour ? ' <span class="nowtag">ahora ' + fmt(nowM) + '</span>' : '') + '</b>' + (open ? '' : '<span>' + esc(names) + '</span>') + '</span>' +
-        '<span class="bcount">' + nd + '/' + its.length + '</span></button>' +
-        (open ? '<ul class="steps">' + its.map(function (i) { return stepRow(i.r, i.b, done, isToday, nowM, true, true); }).join('') + '</ul>' : '') +
-        '</div></div>';
+      var cards = groups.map(function (g) {
+        var key = h + '|' + g.b.id, open = !!hourOpen[key], mins = 0, nd = 0, its = g.its;
+        lastHours.push(key);
+        its.forEach(function (i) { mins += i.r.step.min; if (done[i.r.step.id]) nd++; });
+        var first = its[0].r.from, last = its[its.length - 1].r.to;
+        var isNowG = isToday && nowM >= first && nowM < last;
+        var meta = '<span class="htime">' + fmt(first) + '</span> ' + (its.length > 1 ? its.length + ' pasos · ' : '') + mins + ' min' + (isNowG ? ' · <span class="nowtag">en curso</span>' : '');
+        return '<div class="hcard"' + labAttr(g.b) + '>' +
+          '<button class="hhead" data-act="toggleHour" data-h="' + esc(key) + '" aria-expanded="' + open + '">' + ICON_CHEV +
+          '<span class="hmain"><b>' + esc(g.b.name || its[0].r.step.name || 'Sin nombre') + '</b><span class="hmeta">' + meta + '</span></span>' +
+          '<span class="bcount">' + nd + '/' + its.length + '</span></button>' +
+          (open ? '<ul class="steps">' + its.map(function (i) { return stepRow(i.r, i.b, done, isToday, nowM, false, true); }).join('') + '</ul>' : '') + '</div>';
+      }).join('');
+      html += '<div class="hour"><div class="hlabel">' + h + ':00</div><div class="hcol">' + cards + '</div></div>';
     }
     return html + '</div>';
   }
 
+  function conflictBox(b) {
+    if (!conflict || conflict.id !== b.id) return '';
+    var P = conflict.plan, isNew = b.id === 'draft' || b === draft;
+    var names = P.hit.map(function (x) { return '«' + esc(x.name || 'Sin nombre') + '» (' + fmt(toMin(x.start)) + '–' + fmt(blockEnd(x)) + ')'; }).join(', ');
+    var h = '<div class="conflict" role="alert"><p><b>Se cruza con ' + names + '.</b></p>';
+    if (P.fits) {
+      h += '<ul>' + P.moves.map(function (m) { return '<li>' + (m.self ? 'Esta actividad empezaría' : '«' + esc(m.b.name || 'Sin nombre') + '» pasaría') + ' de ' + fmt(m.from) + ' a ' + fmt(m.to) + '</li>'; }).join('') + '</ul>';
+    } else h += '<p>No hay espacio en el día para correrlas.</p>';
+    h += '<div class="row">' + (P.fits ? '<button class="btn primary" data-act="conflictMove">Correr actividades</button>' : '') +
+      '<button class="btn" data-act="conflictCancel">' + (isNew ? 'Volver a editar' : 'Cancelar cambios') + '</button>' +
+      '<button class="btn ghost small" data-act="conflictKeep">Dejar cruzadas</button></div></div>';
+    return h;
+  }
   function editPanel(b, isNew) {
     var kind = freqKind(b), id = esc(b.id);
     var chips = [1, 2, 3, 4, 5, 6, 0].map(function (d) {
@@ -674,12 +739,17 @@ textarea.in { resize: vertical; min-height: 84px; }
     if (isNew) {
       stepsHtml = '<div class="fgrid"><label class="fl"><span>Pasos (opcional)</span><textarea class="in" id="f-raw" data-b="' + id + '" data-f="raw" placeholder="Uno por línea: nombre, minutos&#10;Descarga del reporte, 2&#10;Pegar datos, 5">' + esc(b.raw) + '</textarea></label>' +
         '<label class="fl"><span>Duración (min)</span><input class="in" id="f-dur" type="number" min="1" inputmode="numeric" data-b="' + id + '" data-f="dur" value="' + esc(b.dur) + '"></label></div>' +
-        '<p class="hint">Si dejas los pasos vacíos, se crea un solo paso con la duración indicada. Después puedes editarlos con el lápiz.</p>';
+        '<p class="hint">Si dejas los pasos vacíos, la actividad misma es el paso (con la duración indicada). Después puedes dividirla con el lápiz.</p>';
     } else {
+      if (isSimple(b)) {
+        stepsHtml = '<div class="fgrid"><label class="fl"><span>Duración (min)</span><input class="in" id="sm-' + esc(b.steps[0].id) + '" type="number" min="1" inputmode="numeric" data-b="' + id + '" data-s="' + esc(b.steps[0].id) + '" data-sf="min" value="' + b.steps[0].min + '"></label>' +
+          '<div class="fl"><span>Pasos</span><button class="btn small" data-act="addStep" data-b="' + id + '">+ Dividir en pasos</button></div></div>' +
+          '<p class="hint">Sin pasos, la actividad misma es el paso. Termina a las ' + fmt(blockEnd(b)) + '.</p>';
+      } else
       stepsHtml = '<div class="fl"><span>Pasos, en orden</span><ul class="elist">' + b.steps.map(function (s) {
         return '<li class="estep"><input class="in" id="sn-' + esc(s.id) + '" data-b="' + id + '" data-s="' + esc(s.id) + '" data-sf="name" value="' + esc(s.name) + '" aria-label="Nombre del paso" placeholder="Nombre del paso">' +
           '<input class="in" id="sm-' + esc(s.id) + '" type="number" min="1" inputmode="numeric" data-b="' + id + '" data-s="' + esc(s.id) + '" data-sf="min" value="' + s.min + '" aria-label="Minutos">' +
-          '<button class="btn icon" data-act="delStep" data-b="' + id + '" data-s="' + esc(s.id) + '" aria-label="Quitar paso">✕</button></li>';
+          (b.steps.length > 1 ? '<button class="btn icon" data-act="delStep" data-b="' + id + '" data-s="' + esc(s.id) + '" aria-label="Quitar paso">✕</button>' : '') + '</li>';
       }).join('') + '</ul></div><div><button class="btn small" data-act="addStep" data-b="' + id + '">+ Agregar paso</button></div>' +
         '<p class="hint">Las horas de cada paso se calculan solas desde la hora de inicio.</p>';
     }
@@ -691,7 +761,7 @@ textarea.in { resize: vertical; min-height: 84px; }
       '<div class="fgrid"><label class="fl"><span>Nombre</span><input class="in" id="f-name" data-b="' + id + '" data-f="name" value="' + esc(b.name) + '" placeholder="Ej. Distribución Pompom"></label>' +
       '<label class="fl"><span>Hora de inicio</span><input class="in" id="f-start" type="time" data-b="' + id + '" data-f="start" value="' + esc(hhmm(toMin(b.start))) + '"></label></div>' +
       '<div class="fgrid two">' + freq + extra + '</div>' + labelField(b) + stepsHtml +
-      (b.err ? '<p class="err" role="alert">' + esc(b.err) + '</p>' : '') + actions + '</div></article>';
+      (b.err ? '<p class="err" role="alert">' + esc(b.err) + '</p>' : '') + (conflictBox(b) || actions) + '</div></article>';
   }
 
   function dayCards(bl, done, isToday, nowM, eb) {
@@ -813,6 +883,25 @@ textarea.in { resize: vertical; min-height: 84px; }
       return m && m[1].trim() ? { id: uid(), name: m[1].trim(), min: Math.max(1, +m[2]) } : { id: uid(), name: l, min: 10 };
     });
   }
+  function addNew(nb) {
+    state.blocks.push(nb);
+    if (filterLabel && (nb.label || '') !== filterLabel) filterLabel = '';
+    if (nb.once) sel = parseKey(nb.once);
+    draft = null; conflict = null; commit(); render();
+  }
+  function finishConflict() {
+    var c = conflict; conflict = null;
+    if (c.id === 'draft') { addNew(c.nb); return; }
+    editId = null; editSnap = null; commit(); render();
+  }
+  /* Cierra la edición; si la actividad se pisa con otra, muestra la caja de conflicto y devuelve false. */
+  function closeEdit() {
+    var b = editId && findBlock(editId);
+    if (!b) { editId = null; editSnap = null; return true; }
+    var P = planMoves(b);
+    if (P) { conflict = { id: b.id, plan: P }; renderList(); return false; }
+    editId = null; editSnap = null; conflict = null; return true;
+  }
   function newDraft() {
     return { id: 'draft', name: '', start: '08:00', days: [0, 1, 2, 3, 4, 5, 6], once: '', label: '', raw: '', dur: 30, err: '', steps: [] };
   }
@@ -828,7 +917,7 @@ textarea.in { resize: vertical; min-height: 84px; }
     else if (act === 'pick') { sel = parseKey(t.dataset.k); render(); }
     else if (act === 'setView') { view = t.dataset.v; if (view === 'month') syncMonth(); else { try { localStorage.setItem(LS_VIEW, view); } catch (x) {} } render(); }
     else if (act === 'toggleBlock') { collapsed[t.dataset.b] = (collapsed[t.dataset.b] === false); renderList(); }
-    else if (act === 'toggleHour') { var h = +t.dataset.h; hourOpen[h] = !hourOpen[h]; renderList(); }
+    else if (act === 'toggleHour') { var h = t.dataset.h; hourOpen[h] = !hourOpen[h]; renderList(); }
     else if (act === 'toggleAll') {
       if (view === 'hour') { var any = lastHours.some(function (h2) { return hourOpen[h2]; }); lastHours.forEach(function (h2) { hourOpen[h2] = !any; }); }
       else { var bl = blocksFor(sel), anyO = bl.some(function (x) { return collapsed[x.id] === false; }); bl.forEach(function (x) { collapsed[x.id] = anyO; }); }
@@ -839,7 +928,7 @@ textarea.in { resize: vertical; min-height: 84px; }
       delete state.done[keyOf(sel)]; commit(); render();
     }
     else if (act === 'newBlock') { draft = newDraft(); editId = null; renderList(); var f = document.getElementById('f-name'); if (f) { f.focus(); f.scrollIntoView({ block: 'center', behavior: 'smooth' }); } }
-    else if (act === 'cancelDraft') { draft = null; renderList(); }
+    else if (act === 'cancelDraft') { draft = null; conflict = null; renderList(); }
     else if (act === 'saveDraft') {
       var d = draft; if (!d) return;
       if (!d.name.trim()) d.err = 'Escribe el nombre de la actividad.';
@@ -849,13 +938,29 @@ textarea.in { resize: vertical; min-height: 84px; }
       if (d.err) { renderList(); return; }
       var steps = parseSteps(d.raw);
       if (!steps.length) steps = [{ id: uid(), name: d.name.trim(), min: Math.max(1, parseInt(d.dur, 10) || 30) }];
-      state.blocks.push({ id: uid(), name: d.name.trim(), start: d.start, days: d.days.slice(), once: d.once || '', label: d.label || '', steps: steps });
-      if (filterLabel && (d.label || '') !== filterLabel) filterLabel = '';
-      if (d.once) sel = parseKey(d.once);
-      draft = null; commit(); render();
+      var nb = { id: uid(), name: d.name.trim(), start: d.start, days: d.days.slice(), once: d.once || '', label: d.label || '', steps: steps };
+      var P = planMoves(nb);
+      if (P) { conflict = { id: 'draft', plan: P, nb: nb }; renderList(); return; }
+      addNew(nb);
     }
-    else if (act === 'edit') { editId = t.dataset.b; draft = null; renderList(); var fn = document.getElementById('f-name'); if (fn) fn.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
-    else if (act === 'doneEdit') { editId = null; render(); }
+    else if (act === 'edit') { if (editId && editId !== t.dataset.b && !closeEdit()) return; editSnap = clone(findBlock(t.dataset.b)); editId = t.dataset.b; draft = null; conflict = null; renderList(); var fn = document.getElementById('f-name'); if (fn) fn.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+    else if (act === 'doneEdit') { if (closeEdit()) render(); }
+    else if (act === 'markAll') {
+      b = findBlock(t.dataset.b); if (!b) return;
+      var kk = keyOf(sel), dn = state.done[kk] || (state.done[kk] = {}), allDone = b.steps.every(function (x) { return dn[x.id]; }), nw = new Date();
+      b.steps.forEach(function (x) { if (allDone) delete dn[x.id]; else if (!dn[x.id]) dn[x.id] = pad(nw.getHours()) + ':' + pad(nw.getMinutes()); });
+      if (!Object.keys(dn).length) delete state.done[kk];
+      commit(); render();
+    }
+    else if (act === 'conflictMove') { if (conflict) { conflict.plan.moves.forEach(function (m) { m.b.start = hhmm(m.to); }); finishConflict(); } }
+    else if (act === 'conflictKeep') { if (conflict) finishConflict(); }
+    else if (act === 'conflictCancel') {
+      if (!conflict) return;
+      if (conflict.id === 'draft') { conflict = null; renderList(); return; }
+      var ix = state.blocks.map(function (x) { return x.id; }).indexOf(conflict.id);
+      if (ix !== -1 && editSnap) state.blocks[ix] = editSnap;
+      conflict = null; editSnap = null; editId = null; commit(); render();
+    }
     else if (act === 'delBlock') {
       if (!arm(t, '¿Seguro? Toca otra vez')) return;
       state.blocks = state.blocks.filter(function (x) { return x.id !== t.dataset.b; }); editId = null; commit(); render();
@@ -900,7 +1005,8 @@ textarea.in { resize: vertical; min-height: 84px; }
     if (!editId && !draft) return;
     var b = findBlock(t.dataset.b); if (!b) return;
     var f = t.dataset.f;
-    if (f === 'name') { b.name = t.value; touch(b); }
+    if (conflict && (f || t.dataset.sf)) { conflict = null; var tid = t.id, pos = t.selectionStart; renderList(); var again = tid && document.getElementById(tid); if (again) { again.focus(); try { again.setSelectionRange(pos, pos); } catch (x) {} } t = again || t; }
+    if (f === 'name') { var simp = isSimple(b); b.name = t.value; if (simp) b.steps[0].name = t.value; touch(b); }
     else if (f === 'start') { if (/^\d{1,2}:\d{2}/.test(t.value)) { b.start = t.value; touch(b); if (b !== draft) { renderSummary(); } } }
     else if (f === 'once') { if (DATE_RE.test(t.value)) { b.once = t.value; touch(b); renderSummary(); renderWeek(); } }
     else if (f === 'raw') { b.raw = t.value; }
