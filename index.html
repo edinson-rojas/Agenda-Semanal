@@ -132,9 +132,10 @@ h1 { font: 700 clamp(30px, 7vw, 46px)/1 var(--f-display); margin: 0; text-wrap: 
 .hcol { min-width: 0; }
 .hcard { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; margin-bottom: 8px; min-width: 0; }
 .hcard.empty { background: transparent; border-style: dashed; padding: 10px 14px; color: var(--ink-2); font-size: 13px; }
-.hcard { position: relative; }
-.hcard > .pen.chk { position: absolute; top: 9px; right: 50px; }
-.hcard > .pen.sm { position: absolute; top: 9px; right: 10px; width: 32px; height: 32px; }
+.hrow { display: flex; align-items: center; }
+.hrow .hhead { flex: 1; min-width: 0; width: auto; }
+.hbtns { display: flex; gap: 6px; padding-right: 10px; flex: none; }
+.hbtns .pen { width: 32px; height: 32px; }
 .hhead { width: 100%; display: flex; align-items: center; gap: 8px; text-align: left; background: transparent; border: 0; cursor: pointer; padding: 11px 14px 11px 10px; }
 /* chk offset */
 .hhead .bcount { display: none; }
@@ -708,10 +709,10 @@ textarea.in { resize: vertical; min-height: 84px; }
         var first = its[0].r.from, last = its[its.length - 1].r.to;
         var isNowG = isToday && nowM >= first && nowM < last;
         var meta = '<span class="htime">' + fmt(first) + '</span> ' + (its.length > 1 ? its.length + ' pasos · ' : '') + mins + ' min' + (isNowG ? ' · <span class="nowtag">en curso</span>' : '');
-        return '<div class="hcard"' + labAttr(g.b) + '>' +
+        return '<div class="hcard"' + labAttr(g.b) + '><div class="hrow">' +
           '<button class="hhead" data-act="toggleHour" data-h="' + esc(key) + '" aria-expanded="' + open + '">' + ICON_CHEV +
           '<span class="hmain"><b>' + esc(g.b.name || its[0].r.step.name || 'Sin nombre') + '</b><span class="hmeta">' + meta + '</span></span>' +
-          '<span class="bcount">' + nd + '/' + its.length + '</span></button>' + chkBtn(g.b, done) + '<button class="pen sm" data-act="edit" data-b="' + esc(g.b.id) + '" aria-label="Editar ' + esc(g.b.name) + '">' + ICON_PEN + '</button>' +
+          '<span class="bcount">' + nd + '/' + its.length + '</span></button><span class="hbtns">' + chkBtn(g.b, done) + '<button class="pen sm" data-act="edit" data-b="' + esc(g.b.id) + '" aria-label="Editar ' + esc(g.b.name) + '">' + ICON_PEN + '</button></span></div>' +
           (open ? '<ul class="steps">' + its.map(function (i) { return stepRow(i.r, i.b, done, isToday, nowM, false, false); }).join('') + '</ul>' : '') + '</div>';
       }).join('');
       html += '<div class="hour"><div class="hlabel">' + h + ':00</div><div class="hcol">' + cards + '</div></div>';
