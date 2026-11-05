@@ -69,6 +69,8 @@ h1 { font: 700 clamp(30px, 7vw, 46px)/1 var(--f-display); margin: 0; text-wrap: 
 .btn.icon { padding: 8px 12px; min-width: 40px; }
 .btn.small { min-height: 36px; padding: 6px 12px; font-size: 13px; }
 
+.quick { display: flex; gap: 8px; }
+.quick .in { flex: 1; min-width: 0; }
 .weekbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .wlabel { text-align: center; line-height: 1.2; }
 .wlabel b { display: block; font: 700 18px var(--f-display); }
@@ -184,6 +186,7 @@ textarea.in { resize: vertical; min-height: 84px; }
 .emptycard p { margin: 4px 0 0; color: var(--ink-2); font-size: 13px; }
 
 .guestbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; background: var(--accent-soft); border: 1px solid var(--accent); border-radius: 8px; padding: 12px 14px; }
+.toast { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); background: var(--ink); color: var(--surface); padding: 10px 16px; border-radius: 8px; font-size: 14px; z-index: 50; max-width: calc(100vw - 32px); box-shadow: 0 6px 20px rgba(0,0,0,.3); }
 .guestbar b { font-size: 14px; }
 .guestbar p { margin: 2px 0 0; font-size: 13px; color: var(--ink-2); max-width: 52ch; }
 .gb-actions { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -266,6 +269,7 @@ textarea.in { resize: vertical; min-height: 84px; }
       <button class="btn icon" data-act="next" aria-label="Día siguiente">→</button>
     </div>
   </header>
+  <form class="quick" id="quick" autocomplete="off"><input id="quick-in" class="in" type="text" enterkeyhint="send" placeholder="Escribe una actividad: «Reunión jueves 3pm 45 min»" aria-label="Escribir una actividad"><button class="btn primary" type="submit" aria-label="Agregar">＋</button></form>
   <div class="topbar">
     <div class="viewbar" id="viewbar"></div>
     <div class="labelbar" id="labelbar" hidden></div>
@@ -273,6 +277,7 @@ textarea.in { resize: vertical; min-height: 84px; }
   <div class="weekbar" id="weekbar"></div>
   <nav class="week" id="week" aria-label="Semana"></nav>
   <section class="summary" id="summary"></section>
+  <div class="guestbar" id="incoming" hidden></div>
   <div class="guestbar" id="guestbar" hidden></div>
   <div class="block" id="labelsPanel" hidden></div>
   <div class="list" id="blocks"></div>
@@ -769,9 +774,9 @@ textarea.in { resize: vertical; min-height: 84px; }
     }
     var actions = isNew
       ? '<div class="actions"><div class="left"><button class="btn primary" data-act="saveDraft">Crear actividad</button><button class="btn" data-act="cancelDraft">Cancelar</button></div></div>'
-      : '<div class="actions"><div class="left"><button class="btn primary" data-act="doneEdit">Listo</button></div><button class="btn small danger" data-act="delBlock" data-b="' + id + '">Eliminar actividad</button></div>';
+      : '<div class="actions"><div class="left"><button class="btn primary" data-act="doneEdit">Listo</button><button class="btn" data-act="shareBlock" data-b="' + id + '">Compartir</button></div><button class="btn small danger" data-act="delBlock" data-b="' + id + '">Eliminar actividad</button></div>';
     return '<article class="block editing"><div class="edit-body">' +
-      '<h2 class="edit-title">' + (isNew ? 'Nueva actividad' : 'Editar actividad') + '</h2>' +
+      '<h2 class="edit-title">' + (isNew ? 'Nueva actividad' : 'Editar actividad') + '</h2>' + (b.hint ? '<p class="hint">' + esc(b.hint) + '</p>' : '') +
       '<div class="fgrid"><label class="fl"><span>Nombre</span><input class="in" id="f-name" data-b="' + id + '" data-f="name" value="' + esc(b.name) + '" placeholder="Ej. Distribución Pompom"></label>' +
       '<label class="fl"><span>Hora de inicio</span><input class="in" id="f-start" type="time" data-b="' + id + '" data-f="start" value="' + esc(hhmm(toMin(b.start))) + '"></label></div>' +
       '<div class="fgrid two">' + freq + extra + '</div>' + labelField(b) + stepsHtml +
@@ -916,6 +921,177 @@ textarea.in { resize: vertical; min-height: 84px; }
     if (P) { conflict = { id: b.id, plan: P }; renderList(); return false; }
     editId = null; editSnap = null; conflict = null; return true;
   }
+
+  /* ---------- entrada rápida: texto libre → actividad (reglas, sin IA ni costo) ---------- */
+  var WDRE = '(?:domingos?|lunes|martes|miercoles|jueves|viernes|sabados?)';
+  var WDMAP = { domingo: 0, lunes: 1, martes: 2, miercoles: 3, jueves: 4, viernes: 5, sabado: 6 };
+  var MONMAP = { enero: 0, febrero: 1, marzo: 2, abril: 3, mayo: 4, junio: 5, julio: 6, agosto: 7, septiembre: 8, setiembre: 8, octubre: 9, noviembre: 10, diciembre: 11 };
+  function plain(x) { return x.toLowerCase().replace(/ñ/g, 'n').replace(/[áàä]/g, 'a').replace(/[éèë]/g, 'e').replace(/[íìï]/g, 'i').replace(/[óòö]/g, 'o').replace(/[úùü]/g, 'u'); }
+  function wdIdx(n) { return n in WDMAP ? WDMAP[n] : WDMAP[n.slice(0, -1)]; }
+  function nextWd(dow) { var d = noon(new Date()); for (var i = 0; i < 8; i++) { if (d.getDay() === dow) return d; d.setDate(d.getDate() + 1); } return d; }
+  function addDays(n) { var d = noon(new Date()); d.setDate(d.getDate() + n); return d; }
+  function parseQuick(text) {
+    var o = ' ' + text + ' ', t = plain(o), m, assumed = '';
+    function take(re) { var x = re.exec(t); if (!x) return null; o = o.slice(0, x.index) + ' ' + o.slice(x.index + x[0].length); t = t.slice(0, x.index) + ' ' + t.slice(x.index + x[0].length); return x; }
+    function ap(x) { return x ? x.replace(/\./g, '') : ''; }
+    function conv(h, a, per, sure) {
+      if (a === 'pm' && h < 12) return h + 12;
+      if (a === 'am') return h === 12 ? 0 : h;
+      if (per === 'tarde' || per === 'noche') return h < 12 ? h + 12 : h;
+      if (per === 'manana') return h;
+      if (!sure && h >= 1 && h <= 6) { assumed = h + ' pm'; return h + 12; }
+      return h;
+    }
+    take(/^\s*(?:agrega(?:r)?|programa(?:r)?|crea(?:r)?|anota(?:r)?|a[nñ]ade|agenda(?:r)?|recuerda(?:me)?)\s+/);
+    var label = '';
+    while ((m = take(/#([a-z0-9]+)/))) { state.labelNames.forEach(function (n, i) { if (n && plain(n).replace(/\s+/g, '') === m[1]) label = 'l' + (i + 1); }); }
+    var dateObj = null, days = null, per = '';
+    if ((m = take(/\besta\s+(manana|tarde|noche)\b/))) { per = m[1]; dateObj = addDays(0); }
+    else if ((m = take(/\b(?:por|de|en)\s+la\s+(manana|tarde|noche)\b/))) per = m[1];
+    var start = null, dur = null;
+    var A = '(am|pm|a\\.m\\.|p\\.m\\.)?';
+    if ((m = take(new RegExp('\\bde\\s+(\\d{1,2})(?::(\\d{2}))?\\s*' + A + '\\s+a\\s+(?:las?\\s+)?(\\d{1,2})(?::(\\d{2}))?\\s*' + A + '(?![a-z])')))) {
+      var a1 = ap(m[3]), a2 = ap(m[6]), h1 = +m[1], h2 = +m[4];
+      var sure = !!(a1 || a2 || m[2] || m[5]);
+      var s1 = conv(h1, a1 || a2, per, sure) * 60 + (+m[2] || 0), e1 = conv(h2, a2, per, sure) * 60 + (+m[5] || 0);
+      if (e1 <= s1) e1 += 720; if (e1 > s1) { start = s1; dur = e1 - s1; }
+    }
+    if (dur === null) {
+      if ((m = take(/\b(?:por|durante)?\s*(\d{1,2})\s*(?:h|hr|hrs|hora|horas)\s*(?:y\s*)?(\d{1,2})\s*(?:min|mins|minutos)?(?![a-z])/))) dur = +m[1] * 60 + +m[2];
+      else if ((m = take(/\b(?:por|durante)?\s*(\d+(?:[.,]\d+)?)\s*(?:h|hr|hrs|hora|horas)(?![a-z])/))) dur = Math.round(parseFloat(m[1].replace(',', '.')) * 60);
+      else if ((m = take(/\b(?:por|durante)?\s*(\d+)\s*(?:min|mins|minuto|minutos)(?![a-z])/))) dur = +m[1];
+      else if (take(/\bhora y media\b/)) dur = 90;
+      else if (take(/\bmedia hora\b/)) dur = 30;
+      else if (take(/\buna hora\b/)) dur = 60;
+    }
+    if (start === null) {
+      if ((m = take(new RegExp('\\b(?:a|desde)\\s+las?\\s+(\\d{1,2})(?::(\\d{2}))?\\s*' + A + '(?![a-z])(?:\\s+y\\s+(media|cuarto))?')))) {
+        var hh = +m[1], sure2 = !!(m[2] || ap(m[3]) || m[1].charAt(0) === '0');
+        start = conv(hh, ap(m[3]), per, sure2) * 60 + (+m[2] || 0) + (m[4] === 'media' ? 30 : m[4] === 'cuarto' ? 15 : 0);
+      } else if ((m = take(/\b(?:a|desde)\s+la\s+una\b/))) start = conv(1, '', per, false) * 60;
+      else if ((m = take(new RegExp('\\b(\\d{1,2}):(\\d{2})\\s*' + A + '(?![a-z])')))) start = conv(+m[1], ap(m[3]), per, m[1].charAt(0) === '0') * 60 + +m[2];
+      else if ((m = take(/\b(\d{1,2})\s*(am|pm|a\.m\.|p\.m\.)(?![a-z])/))) start = conv(+m[1], ap(m[2]), per, true) * 60;
+      else if (take(/\bmediodia\b/)) start = 720;
+    }
+    /* fecha / repetición */
+    var rec = false;
+    if (take(/\btod[oa]s\s+los\s+dias\b|\bcada\s+dia\b|\bdiari[oa]s?\b|\bdiariamente\b/)) { days = [0, 1, 2, 3, 4, 5, 6]; rec = true; }
+    if (!rec && (m = take(new RegExp('\\b(?:de\\s+)?(' + WDRE + ')\\s+(?:a|hasta)\\s+(?:el\\s+)?(' + WDRE + ')\\b')))) {
+      var ord = [1, 2, 3, 4, 5, 6, 0], i1 = ord.indexOf(wdIdx(m[1])), i2 = ord.indexOf(wdIdx(m[2]));
+      days = []; for (var k = i1; ; k = (k + 1) % 7) { days.push(ord[k]); if (k === i2) break; }
+      rec = true;
+    }
+    if (!rec) {
+      var found = [], plural = false;
+      while ((m = take(new RegExp('\\b((?:todos\\s+los|todas\\s+las|cada|los|el\\s+proximo|proximo|este|el)\\s+)?(' + WDRE + ')\\b')))) {
+        found.push(wdIdx(m[2])); if (m[1] && /todos|todas|cada|los/.test(m[1])) plural = true; if (!m[1] && /s$/.test(m[2]) && m[2] !== 'lunes' && m[2] !== 'martes' && m[2] !== 'miercoles' && m[2] !== 'jueves' && m[2] !== 'viernes') plural = true;
+      }
+      if (found.length) { if (plural || found.length > 1) { days = found; rec = true; } else dateObj = nextWd(found[0]); }
+    }
+    if (!rec && !dateObj) {
+      if (take(/\bpasado\s+manana\b/)) dateObj = addDays(2);
+      else if (take(/\bmanana\b/)) dateObj = addDays(1);
+      else if (take(/\bhoy\b/)) dateObj = addDays(0);
+      else if ((m = take(new RegExp('\\b(?:el\\s+)?(\\d{1,2})\\s+de\\s+(' + Object.keys(MONMAP).join('|') + ')(?:\\s+(?:de\\s+|del\\s+)?(\\d{4}))?')))) {
+        var yy = m[3] ? +m[3] : new Date().getFullYear(), dd = new Date(yy, MONMAP[m[2]], +m[1], 12);
+        if (!m[3] && dd < noon(new Date())) dd = new Date(yy + 1, MONMAP[m[2]], +m[1], 12);
+        dateObj = dd;
+      } else if ((m = take(/\b(\d{1,2})[\/-](\d{1,2})(?:[\/-](\d{2,4}))?(?![0-9a-z])/))) {
+        var y2 = m[3] ? (+m[3] < 100 ? 2000 + +m[3] : +m[3]) : new Date().getFullYear(), d2 = new Date(y2, +m[2] - 1, +m[1], 12);
+        if (!m[3] && d2 < noon(new Date())) d2 = new Date(y2 + 1, +m[2] - 1, +m[1], 12);
+        dateObj = d2;
+      }
+    }
+    if (!rec && !dateObj) dateObj = addDays(0);
+    var once = rec ? '' : keyOf(dateObj);
+    if (days) days = days.filter(function (x, i) { return days.indexOf(x) === i; });
+    if (!days) days = [0, 1, 2, 3, 4, 5, 6];
+    if (dur === null || dur < 1) dur = 30;
+    if (start === null) {
+      var probe = { days: days, once: once }, last = 0;
+      state.blocks.forEach(function (x) { if (sharesDay(probe, x)) last = Math.max(last, blockEnd(x)); });
+      start = (!rec && last && last < 1380) ? last : 480;
+    }
+    start = Math.max(0, Math.min(1439, start));
+    var name = o.replace(/[,;]+/g, ' ').replace(/\s+/g, ' ').trim();
+    for (var q = 0; q < 5; q++) name = name.replace(/^(?:y|e|el|la|los|las|de|del|a|para|por|en|desde|hasta|cada|todos|todas|con)\s+/i, '').replace(/\s+(?:y|e|el|la|los|las|de|del|a|para|por|en|desde|hasta|cada|todos|todas|con)$/i, '');
+    name = name ? name.charAt(0).toUpperCase() + name.slice(1) : 'Actividad';
+    var when = rec ? freqText({ days: days, once: '' }) : cap(DOW[dateObj.getDay()]) + ' ' + dateObj.getDate() + ' de ' + MON[dateObj.getMonth()];
+    var hint = 'Entendí: ' + when + ' · ' + fmt(start) + '–' + fmt(start + dur) + ' (' + dur + ' min)' + (assumed ? ' · asumí ' + assumed + ' (escribe «am» si era de la mañana)' : '') + '. Revisa y toca «Crear actividad».';
+    return { name: name, start: hhmm(start), days: days, once: once, dur: dur, label: label, hint: hint };
+  }
+  document.getElementById('quick').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var inp = document.getElementById('quick-in'), txt = inp.value.trim(); if (!txt) return;
+    var r = parseQuick(txt);
+    draft = { id: 'draft', name: r.name, start: r.start, days: r.days, once: r.once, label: r.label, raw: '', dur: r.dur, err: '', steps: [], hint: r.hint };
+    editId = null; conflict = null; inp.value = ''; inp.blur();
+    renderList();
+    var f = document.getElementById('f-name'); if (f) f.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  });
+
+
+  /* ---------- compartir una actividad por enlace (copia, sin servidor) ---------- */
+  var incoming = null, toastT = null;
+  function toast(msg) {
+    var el = document.getElementById('toast'); el.textContent = msg; el.hidden = false;
+    clearTimeout(toastT); toastT = setTimeout(function () { el.hidden = true; }, 3500);
+  }
+  function b64e(str) { return btoa(unescape(encodeURIComponent(str))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
+  function b64d(str) { str = str.replace(/-/g, '+').replace(/_/g, '/'); while (str.length % 4) str += '='; return decodeURIComponent(escape(atob(str))); }
+  function shareUrl(b) {
+    var pl = { v: 1, n: b.name, s: b.start, d: b.days, o: b.once || '', l: labName(b.label), t: b.steps.map(function (x) { return [x.name, x.min]; }) };
+    return location.href.split('#')[0] + '#c=' + b64e(JSON.stringify(pl));
+  }
+  function readShared(hash) {
+    try {
+      var m = /^#c=([A-Za-z0-9_\-]+)$/.exec(hash || ''); if (!m) return null;
+      var o = JSON.parse(b64d(m[1])); if (!o || o.v !== 1 || !Array.isArray(o.t)) return null;
+      var days = (Array.isArray(o.d) ? o.d : []).filter(function (x) { return x >= 0 && x <= 6; });
+      var steps = o.t.slice(0, 60).map(function (x) { return { name: String(x[0] || '').replace(/\s+/g, ' ').slice(0, 120), min: Math.max(1, Math.min(1440, parseInt(x[1], 10) || 1)) }; });
+      if (!steps.length) return null;
+      return { name: String(o.n || 'Actividad').slice(0, 120), start: /^\d{1,2}:\d{2}/.test(o.s) ? o.s : '08:00', days: days.length ? days : [0, 1, 2, 3, 4, 5, 6], once: DATE_RE.test(o.o || '') ? o.o : '', label: String(o.l || '').slice(0, 24), steps: steps };
+    } catch (e) { return null; }
+  }
+  function renderIncoming() {
+    var el = document.getElementById('incoming');
+    if (!incoming) { el.hidden = true; el.innerHTML = ''; return; }
+    var b = { start: incoming.start, steps: incoming.steps }, tot = 0; incoming.steps.forEach(function (x) { tot += x.min; });
+    var when = incoming.once ? 'el ' + incoming.once : freqText({ days: incoming.days, once: '' });
+    el.hidden = false;
+    el.innerHTML = '<div><b>Te compartieron «' + esc(incoming.name) + '»</b><p>' + fmt(toMin(incoming.start)) + '–' + fmt(toMin(incoming.start) + tot) + ' · ' + esc(when) + ' · ' + incoming.steps.length + (incoming.steps.length === 1 ? ' paso' : ' pasos') + '. Se agrega como una copia tuya.</p></div>' +
+      '<div class="acct"><button class="btn small primary" data-act="acceptShared">Agregar a mi agenda</button><button class="btn small ghost" data-act="dismissShared">Descartar</button></div>';
+  }
+  function checkHash() {
+    var sh = readShared(location.hash);
+    if (!sh) return;
+    incoming = sh;
+    try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
+    renderIncoming();
+  }
+  window.addEventListener('hashchange', checkHash);
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest && e.target.closest('[data-act]'); if (!t) return;
+    var act = t.dataset.act;
+    if (act === 'shareBlock') {
+      var b = findBlock(t.dataset.b); if (!b) return;
+      var url = shareUrl(b), text = 'Te comparto la actividad «' + b.name + '» (' + fmt(toMin(b.start)) + '–' + fmt(blockEnd(b)) + '). Ábrela para agregarla a tu agenda: ';
+      if (navigator.share) { navigator.share({ title: b.name, text: text, url: url }).catch(function () {}); return; }
+      var done = function () { toast('Enlace copiado. Pégalo en el chat.'); };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text + url).then(done, function () { window.prompt('Copia este enlace:', text + url); });
+      else window.prompt('Copia este enlace:', text + url);
+    } else if (act === 'dismissShared') { incoming = null; renderIncoming(); }
+    else if (act === 'acceptShared') {
+      if (!incoming) return;
+      var lab = '';
+      state.labelNames.forEach(function (n, i) { if (n && incoming.label && n.toLowerCase() === incoming.label.toLowerCase()) lab = 'l' + (i + 1); });
+      var tot = 0; incoming.steps.forEach(function (x) { tot += x.min; });
+      draft = { id: 'draft', name: incoming.name, start: incoming.start, days: incoming.days.slice(), once: incoming.once, label: lab, raw: incoming.steps.map(function (x) { return x.name + ', ' + x.min; }).join('\n'), dur: tot, err: '', steps: [], hint: 'Actividad compartida: revisa la hora y toca «Crear actividad».' };
+      incoming = null; editId = null; conflict = null; renderIncoming(); renderList();
+      var f = document.getElementById('f-name'); if (f) f.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }
+  });
+
   function newDraft() {
     return { id: 'draft', name: '', start: '08:00', days: [0, 1, 2, 3, 4, 5, 6], once: '', label: '', raw: '', dur: 30, err: '', steps: [] };
   }
@@ -1081,9 +1257,11 @@ textarea.in { resize: vertical; min-height: 84px; }
 
   render();
   initSync();
+  checkHash();
   if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)) { window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); }); }
 })();
 </script>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 </body>
 </html>
 
